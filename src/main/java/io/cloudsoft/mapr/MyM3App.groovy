@@ -39,7 +39,7 @@ public class MyM3App extends AbstractApplication {
                     "sudo truncate -s 20G /mnt/mapr-storagefile1",
                     "sudo truncate -s 10G /mnt/mapr-storagefile2").
                 build() );
-                                                                                                                                  dsdsd
+
         // show URL at top level
         SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(this);
     }
@@ -49,13 +49,13 @@ public class MyM3App extends AbstractApplication {
         String googlePk = Files.toString(new File(System.getProperty("user.home") + "/.ssh/google_compute_engine"), Charsets.UTF_8);
         String googlePubK = Files.toString(new File(System.getProperty("user.home") + "/.ssh/google_compute_engine.pub"), Charsets.UTF_8);
 
-        System.setProperty("jclouds.google-compute.login-credential", googlePk  );
+        System.setProperty("jclouds.google-compute.login-credential", googlePk);
 
         MyM3App app = new MyM3App();
 
         List args = new ArrayList(Arrays.asList(argv));
         BrooklynServerDetails server = BrooklynLauncher.newLauncher().
-                setAttribute("credential", Files.toString(new File("my_personal_pk-cloudsoft-gce.pem"), Charsets.UTF_8)).
+                setAttribute("credential", Files.toString(new File("cloudsoft-gce-pk.pem"), Charsets.UTF_8)).
                 setAttribute("privateKeyData", null).
                 setAttribute("privateKeyFile", null).
                 setAttribute("publicKeyFile", null).

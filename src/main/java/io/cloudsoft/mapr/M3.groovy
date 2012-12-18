@@ -44,11 +44,11 @@ public class M3 extends AbstractEntity implements Startable {
     public static BasicConfigKey<Boolean> MASTER_UP = [ Boolean, "mapr.master.serviceUp", "" ];
     
     MasterNode master = new MasterNode(this, name: "node1 (master)");
-    ZookeeperWorkerNode zk1 = new ZookeeperWorkerNode(this, name: "node2 (zk+worker)");
-    ZookeeperWorkerNode zk2 = new ZookeeperWorkerNode(this, name: "node3 (zk+worker)");
-    
-    DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode),
-        initialSize: 2);
+//    ZookeeperWorkerNode zk1 = new ZookeeperWorkerNode(this, name: "node2 (zk+worker)");
+//    ZookeeperWorkerNode zk2 = new ZookeeperWorkerNode(this, name: "node3 (zk+worker)");
+//
+//    DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode),
+//        initialSize: 2);
 
     @Override public void start(Collection<? extends Location> locations) { StartableMethods.start(this, locations); }
     @Override public void stop() { StartableMethods.stop(this); }
