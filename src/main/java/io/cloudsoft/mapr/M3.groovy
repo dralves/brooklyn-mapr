@@ -45,9 +45,9 @@ public class M3 extends AbstractEntity implements Startable {
     
     MasterNode master = new MasterNode(this, name: "node1 (master)");
     ZookeeperWorkerNode zk1 = new ZookeeperWorkerNode(this, name: "node2 (zk+worker)");
-    ZookeeperWorkerNode zk2 = new ZookeeperWorkerNode(this, name: "node3 (zk+worker)");    
+    ZookeeperWorkerNode zk2 = new ZookeeperWorkerNode(this, name: "node3 (zk+worker)");
     
-    DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode), 
+    DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode),
         initialSize: 2);
 
     @Override public void start(Collection<? extends Location> locations) { StartableMethods.start(this, locations); }

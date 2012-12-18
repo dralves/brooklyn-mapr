@@ -59,9 +59,8 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
     protected Map<String,Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
         Map flags = [:]; //super.obtainProvisioningFlags(location); 
         flags.templateBuilder = new PortableTemplateBuilder().
-            osFamily(OsFamily.UBUNTU).osVersionMatches("11.04").os64Bit(true).
-            minRam(2560);
-        flags.userName = "ubuntu";
+            imageNameMatches("gcel-12-04-v20121106");
+        flags.userName = "dralves";
         flags.inboundPorts = 
             // from: http://www.mapr.com/doc/display/MapR/Ports+Used+by+MapR
             [ 22, 2048, 5660, 5181, 7221, 7222, 8080, 8443, 9001, 9997, 9998, 50030, 50060, 60000 ] +

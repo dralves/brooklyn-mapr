@@ -1,20 +1,22 @@
 package io.cloudsoft.mapr
 
-import io.cloudsoft.mapr.m3.AbstractM3Node
-import io.cloudsoft.mapr.m3.M3Disks
-import io.cloudsoft.mapr.m3.MasterNode
 import brooklyn.enricher.basic.SensorPropagatingEnricher
 import brooklyn.entity.basic.AbstractApplication
 import brooklyn.launcher.BrooklynLauncher
 import brooklyn.launcher.BrooklynServerDetails
 import brooklyn.location.Location
 import brooklyn.util.CommandLineUtil
+import com.google.common.base.Charsets
+import com.google.common.io.Files
+import io.cloudsoft.mapr.m3.AbstractM3Node
+import io.cloudsoft.mapr.m3.M3Disks
+import io.cloudsoft.mapr.m3.MasterNode
 
 /** starts an M3 cluster in AWS. login as username 'ubuntu', password 'm4pr'. */
 public class MyM3App extends AbstractApplication {
 
     final static String DEFAULT_LOCATION =
-        "aws-ec2:us-east-1"; 
+        "google-compute";
 //        "cloudstack-citrix";
 //        "aws-ec2-us-east-1-centos";
         
@@ -37,18 +39,28 @@ public class MyM3App extends AbstractApplication {
                     "sudo truncate -s 20G /mnt/mapr-storagefile1",
                     "sudo truncate -s 10G /mnt/mapr-storagefile2").
                 build() );
-        
+                                                                                                                                  dsdsd
         // show URL at top level
         SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(this);
     }
 
     // can start in AWS by running this -- or use brooklyn CLI/REST for most clouds, or programmatic/config for set of fixed IP machines
     public static void main(String[] argv) {
+        String googlePk = Files.toString(new File(System.getProperty("user.home") + "/.ssh/google_compute_engine"), Charsets.UTF_8);
+        String googlePubK = Files.toString(new File(System.getProperty("user.home") + "/.ssh/google_compute_engine.pub"), Charsets.UTF_8);
+
+        System.setProperty("jclouds.google-compute.login-credential", googlePk  );
+
         MyM3App app = new MyM3App();
-        
+
         List args = new ArrayList(Arrays.asList(argv));
         BrooklynServerDetails server = BrooklynLauncher.newLauncher().
-                webconsolePort( CommandLineUtil.getCommandLineOption(args, "--port", "8081+") ).
+                setAttribute("credential", Files.toString(new File("my_personal_pk-cloudsoft-gce.pem"), Charsets.UTF_8)).
+                setAttribute("privateKeyData", null).
+                setAttribute("privateKeyFile", null).
+                setAttribute("publicKeyFile", null).
+                setAttribute("donCreateUser", "true").
+                webconsolePort(CommandLineUtil.getCommandLineOption(args, "--port", "8081+")).
                 managing(app).
                 launch();
 
