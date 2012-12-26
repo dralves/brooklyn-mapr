@@ -1,31 +1,24 @@
-package io.cloudsoft.mapr.m3;
-
-import io.cloudsoft.mapr.M3
-
-import org.jclouds.compute.domain.ExecResponse
-import org.jclouds.scriptbuilder.statements.java.InstallJDK
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+package io.cloudsoft.mapr.m3
 
 import brooklyn.config.BrooklynLogging
 import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver
-import brooklyn.entity.basic.EntityLocal
 import brooklyn.entity.basic.SoftwareProcessDriver
 import brooklyn.entity.basic.lifecycle.CommonCommands
 import brooklyn.entity.trait.Startable
-import brooklyn.location.Location
 import brooklyn.location.basic.SshMachineLocation
 import brooklyn.location.basic.jclouds.JcloudsLocation.JcloudsSshMachineLocation
 import brooklyn.util.MutableMap
-
 import com.google.common.base.Throwables
+import io.cloudsoft.mapr.M3
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements SoftwareProcessDriver {
 
     public static final Logger log = LoggerFactory.getLogger(M3NodeDriver.class);
     public static final Logger logSsh = LoggerFactory.getLogger(BrooklynLogging.SSH_IO);
 
-    public static final String APT_GET_LINE = "deb http://package.mapr.com/releases/v1.2.7/ubuntu/ mapr optional";
+    public static final String APT_GET_LINE = "deb http://package.mapr.com/releases/v2.1.1/ubuntu/ mapr optional";
     public static final String APT_GET_FILE = "/etc/apt/sources.list";
     
     public static final String DISKS_TXT_FQP = "/tmp/disks.txt";
@@ -81,9 +74,9 @@ fi
         exec([ 
             // cldb (java) complains it needs at least 160k, on centos with openjdk7
             "if [ -f /etc/init.d/mapr-cldb ] ; then "+
-                "sed -i s/XX:ThreadStackSize=128/XX:ThreadStackSize=256/ /etc/init.d/mapr-cldb ; fi",
-            // now do the configuration
-            "sudo /opt/mapr/server/configure.sh -C ${masterHostname} -Z ${zkHostnames}" ]);
+                    "sudo sed -i s/XX:ThreadStackSize=128/XX:ThreadStackSize=256/ /etc/init.d/mapr-cldb ; fi",
+                // now do the configuration
+                "sudo /opt/mapr/server/configure.sh -C ${masterHostname} -Z ${zkHostnames}"]);
     } 
     
     public void setupDisks() {
@@ -175,19 +168,21 @@ fi
     public void installJdkFromDlecan() {
         int result = getLocation().execCommands("check java", Arrays.asList("java"));
         if (result==0) return;
-        
-        log.info("${entity}: failing back to legacy JDK install");
+
+        log.info("${entity}: failing back to legacy JDK7 install");
         //this seems to work best on ubuntu (jdk not in default repos for some images!)
         result = exec([
             "sudo add-apt-repository ppa:dlecan/openjdk < /dev/null",
 			// command above fails in ubuntu 12, but isn't needed there
             "sudo apt-get update",
-            "sudo apt-get install -y --allow-unauthenticated openjdk-7-jdk"
+                "sudo apt-get install -y --allow-unauthenticated openjdk-7-jdk",
+                // need to set java home for mapr
+                "echo \"JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64\" | sudo tee -a /etc/environment > /dev/null"
         ]);
         if (result==0)
-            log.info("${entity}: installed JDK from legacy source");
+            log.info("${entity}: installed JDK7 from legacy source");
         else {
-            log.warn("${entity}: failed to install JDK from legacy source; trying JDK6");
+            log.warn("${entity}: failed to install JDK7 from legacy source; trying JDK6");
             result = exec([
                 "sudo apt-get install -y --allow-unauthenticated openjdk-6-jdk"
             ]);
@@ -206,11 +201,17 @@ fi
     public void runMaprPhase1() {
 //        // was needed but don't think it is anymore
 //        Thread.sleep(60*1000);
-//        
+//
+        def entity = (AbstractM3Node) entity;
+
+        entity.setupMapRUser();
         repoUpdate();
         repoInstall();
         configureMapR();
         setupDisks();
+        if (entity.isMaster()) {
+            ((MasterNode) entity).setupMySql();
+        }
         if (entity.isZookeeper()) {
             startZookeeper();
         }
@@ -219,11 +220,15 @@ fi
 
     @Override
     public void start() {
+        def entity = (AbstractM3Node) entity;
+
+        entity.setAttribute(AbstractM3Node.SUBNET_HOSTNAME, entity.getLocalHostname());
         enableNonTtySudo()
         installJdk7();
         runMaprPhase1();
         //wait for ZK to be running everywhere
         entity.getConfig(M3.ZOOKEEPER_READY);
+        entity.configureMetrics(entity.getConfig(M3.MASTER_HOSTNAME));
         entity.runMaprPhase2();
         running = true;
         entity.setAttribute(Startable.SERVICE_UP, true);

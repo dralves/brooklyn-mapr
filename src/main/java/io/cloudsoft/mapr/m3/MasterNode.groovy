@@ -1,84 +1,111 @@
 package io.cloudsoft.mapr.m3
 
-import java.util.List;
-
+import brooklyn.config.render.RendererHints
+import brooklyn.event.adapter.FunctionSensorAdapter
+import brooklyn.event.basic.BasicAttributeSensor
+import brooklyn.location.Location
+import brooklyn.util.MutableMap
+import groovy.sql.GroovyRowResult
+import groovy.sql.Sql
+import groovy.transform.InheritConstructors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import brooklyn.config.render.RendererHints;
-import brooklyn.entity.Effector;
-import brooklyn.entity.basic.Description
-import brooklyn.entity.basic.MethodEffector
-import brooklyn.entity.basic.NamedParameter;
-import brooklyn.event.basic.BasicAttributeSensor
-import brooklyn.event.basic.BasicConfigKey;
-import brooklyn.event.basic.DependentConfiguration;
-import brooklyn.location.Location;
-
-import groovy.transform.InheritConstructors;
+import java.util.concurrent.Callable
 
 @InheritConstructors
 class MasterNode extends AbstractM3Node {
 
     public static final Logger log = LoggerFactory.getLogger(MasterNode.class);
-    
+
+    static String usedSpaceQuery = """
+select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"space\" from METRIC_TRANSACTION a
+    inner join
+        (select e.NODE_ID, e.M_NAME, max(e.EVENT_TIME) as max_time from METRIC_TRANSACTION e where e.M_NAME = \"SRVUSEDMB\" group by e.NODE_ID) b
+    on a.EVENT_TIME = b.max_time and a.M_NAME = b.M_NAME group by a.NODE_ID order by a.NODE_ID;
+""";
+    static String availSpaceQuery = """
+select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"space\" from METRIC_TRANSACTION a
+    inner join
+        (select e.NODE_ID, e.M_NAME, max(e.EVENT_TIME) as max_time from METRIC_TRANSACTION e where e.M_NAME = \"SRVAVAILMB\" group by e.NODE_ID) b
+    on a.EVENT_TIME = b.max_time and a.M_NAME = b.M_NAME group by a.NODE_ID order by a.NODE_ID;
+""";
+
+    public static final BasicAttributeSensor<Double> CLUSTER_USED_DFS_PERCENT =
+        [Double, "cluster.used.dfs.percent", "The percentage o the cluster DFS that is currently being used."];
+
+
     public static final BasicAttributeSensor<String> MAPR_URL = [ String, "mapr.url", "URL where MapR can be accessed" ];
+
     static {
         RendererHints.register(MAPR_URL, new RendererHints.NamedActionWithUrl("Open"));
     }
     
-    public static final BasicAttributeSensor<String> LICENSE_APPROVED = [ String, "mapr.master.license", "this attribute is set when the license is approved (manually)" ];
-    public static final Effector<Void> SET_LICENSE_APPROVED = new MethodEffector(MasterNode.&setLicenseApproved);
-    
-    public static BasicConfigKey<String> MAPR_USERNAME = [ String, "mapr.username", "initial user to create for mapr", "mapr" ];
-    public static BasicConfigKey<String> MAPR_PASSWORD = [ String, "mapr.password", "initial password for initial user" ];
-    
     public boolean isZookeeper() { return true; }
     
     public List<String> getAptPackagesToInstall() {
-        [ "mapr-cldb", "mapr-jobtracker", "mapr-nfs", "mapr-webserver" ] + super.getAptPackagesToInstall();
+        ["mapr-cldb", "mapr-jobtracker", "mapr-nfs", "mapr-webserver", "mysql-server"] + super.getAptPackagesToInstall();
     }
 
-    // TODO config param?  note, if this is not 'ubuntu', we have to create the user; see jclouds AdminAccess
-    public String getUser() { getConfig(MAPR_USERNAME) }
-    public String getPassword() { getConfig(MAPR_PASSWORD) }
-    
-    public void setupAdminUser(String user, String password) {
-        //    On node 1, give full permission to the chosen administrative user using the following command:
-        //    (and set a passwd)
-        driver.exec([
-            "sudo adduser ${user} < /dev/null || true",
-            "echo \"${password}\n${password}\" | sudo passwd ${user}",
-            "sudo /opt/mapr/bin/maprcli acl edit -type cluster -user ${user}:fc" ]);
+    public void setupAdminUser() {
+        driver.exec(["sudo /opt/mapr/bin/maprcli acl edit -type cluster -user ${user}:fc"]);
     }
-    
-    public void waitForLicense() {
-        // MANUALLY: accept the license
-        //    https://<node 1>:8443  -->  accept agreement, login, add license key
-        log.info("${this} waiting for MapR LICENSE"+"""
-**********************************************************************
-* LICENSE must be accepted manually at:
-*   MapR console -- https://${getAttribute(HOSTNAME)}:8443
-* THEN invoke effector  setLicenseApproved true  at:
-*   Brooklyn console -- e.g. http://localhost:8081
-**********************************************************************""");
-        getExecutionContext().submit(DependentConfiguration.attributeWhenReady(this, LICENSE_APPROVED)).get();
-        log.info("MapR LICENSE accepted, proceeding");
+
+    public void setupMySql() {
+        driver.exec([
+                "sudo sed -i s/127.0.0.1/0.0.0.0/ /etc/mysql/my.cnf",
+                "mysqladmin -u root password ${password}",
+                "sudo /etc/init.d/mysql restart",
+                "echo \"GRANT ALL ON *.* TO '${user}'@'%' IDENTIFIED BY '${password}';\" | sudo tee -a /tmp/grant-all-cmd.sql > /dev/null",
+                "mysql -u root -p${password} < /tmp/grant-all-cmd.sql",
+                "mysql -u root -p${password} < /opt/mapr/bin/setup.sql"]);
     }
 
     public void startMasterServices() {
         // start the services
-        driver.exec([ "sudo /opt/mapr/bin/maprcli node services -nodes ${getAttribute(HOSTNAME)} -nfs start" ]);
+        driver.exec(["sudo /opt/mapr/bin/maprcli node services -nodes ${getAttribute(SUBNET_HOSTNAME)} -nfs start"]);
     }    
     
     public void runMaprPhase2() {
         driver.startWarden();
-        setupAdminUser(user, password);
+        setupAdminUser();
         startMasterServices();
         
         // not sure this sleep is necessary, but seems safer...
         Thread.sleep(10*1000);
         setAttribute(MAPR_URL, "https://${getAttribute(HOSTNAME)}:8443")
+
+//        FunctionSensorAdapter dfsUsageSensor = sensorRegistry.register(new FunctionSensorAdapter(
+//                MutableMap.of("period", 1 * 5000),
+//                new Callable<Double>() {
+//                    public Double call() {
+//                        // creating a new sql per query isnt the way to go
+//                        def sql = Sql.newInstance("jdbc:mysql://${getAttribute(HOSTNAME)}:3306/metrics", getUser(), getPassword());
+//
+//                        List<GroovyRowResult> usedSpace = []
+//                        sql.eachRow(usedSpaceQuery) {
+//                            usedSpace << it.toRowResult()
+//                        }
+//                        List<GroovyRowResult> availSpace = []
+//                        sql.eachRow(availSpaceQuery) {
+//                            availSpace << it.toRowResult()
+//                        }
+//
+//                        int sumUsed = 0;
+//                        int sumAvail = 0;
+//                        for (int i = 0; i < usedSpace.size(); i++) {
+//                            def used = usedSpace[i];
+//                            def avail = availSpace[i];
+//                            sumUsed += used.get("space");
+//                            sumAvail += avail.get("space");
+//                        }
+//                        log.info("current dfs usage: " + 100 * sumUsed / (sumUsed + sumAvail));
+//                        return 100 * sumUsed / (sumUsed + sumAvail);
+//                    }
+//                }));
+//        dfsUsageSensor.poll(CLUSTER_USED_DFS_PERCENT);
+
+
     }
 
     public void start(Collection<? extends Location> locations) {
@@ -86,11 +113,8 @@ class MasterNode extends AbstractM3Node {
             throw new IllegalArgumentException("configuration "+MAPR_PASSWORD.getName()+" must be specified");
         super.start(locations);
     }
-    
-    @Description("Sets an attribute on the entity to indicate that the license has been approved")
-    public void setLicenseApproved(@NamedParameter("text") String text) {
-        log.info("MapR master {} got license approved invoked with: {}", this, text);
-        setAttribute(LICENSE_APPROVED, text);
-    }
-    
+
+    public boolean isMaster() { return true; }
+
+
 }

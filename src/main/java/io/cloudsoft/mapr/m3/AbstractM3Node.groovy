@@ -1,24 +1,15 @@
 package io.cloudsoft.mapr.m3
 
-import java.util.List;
-import java.util.Map;
-
-import org.jclouds.compute.domain.OsFamily
-import org.jclouds.compute.options.TemplateOptions;
+import brooklyn.entity.Entity
+import brooklyn.entity.basic.Lifecycle
+import brooklyn.entity.basic.SoftwareProcessEntity
+import brooklyn.entity.trait.Startable
+import brooklyn.event.basic.BasicAttributeSensor
+import brooklyn.event.basic.BasicConfigKey
+import brooklyn.location.MachineProvisioningLocation
+import brooklyn.location.basic.jclouds.templates.PortableTemplateBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-
-import brooklyn.entity.Entity
-import brooklyn.entity.basic.Lifecycle;
-import brooklyn.entity.basic.SoftwareProcessEntity
-import brooklyn.entity.trait.Startable;
-import brooklyn.event.basic.BasicAttributeSensor;
-import brooklyn.event.basic.BasicConfigKey;
-import brooklyn.location.MachineProvisioningLocation;
-import brooklyn.location.NoMachinesAvailableException
-import brooklyn.location.basic.SshMachineLocation
-import brooklyn.location.basic.jclouds.templates.PortableTemplateBuilder
 
 abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable {
 
@@ -26,7 +17,26 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
 
     public static BasicConfigKey<DiskSetupSpec> DISK_SETUP_SPEC = [ DiskSetupSpec, "mapr.node.disk.setup", "" ];
     public static final BasicAttributeSensor<Boolean> ZOOKEEPER_UP = [ Boolean, "mapr.zookeeper.serviceUp", "whether zookeeper has been started" ];
-    
+
+    public static BasicConfigKey<String> MAPR_USERNAME = [String, "mapr.username", "initial user to create for mapr", "mapr"];
+    public static BasicConfigKey<String> MAPR_PASSWORD = [String, "mapr.password", "initial password for initial user"];
+
+    // TODO config param?  note, if this is not 'ubuntu', we have to create the user; see jclouds AdminAccess
+    public String getUser() { getConfig(MAPR_USERNAME) }
+
+    public String getPassword() { getConfig(MAPR_PASSWORD) }
+
+    public void configureMetrics(String hostname) {
+        driver.exec([
+                "sudo /opt/mapr/server/configure.sh -R -d ${hostname}:3306 -du ${user} -dp ${password} -ds metrics"]);
+    }
+
+    public void setupMapRUser() {
+        driver.exec([
+                "sudo adduser ${user} < /dev/null || true",
+                "echo \"${password}\n${password}\" | sudo passwd ${user}"]);
+    }
+
     public AbstractM3Node(Entity owner) { this([:], owner) }
     public AbstractM3Node(Map properties=[:], Entity owner=null) {
         super(properties, owner)
@@ -36,9 +46,11 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
     }
     
     public boolean isZookeeper() { return false; }
-    
+
+    public boolean isMaster() { return false; }
+
     public List<String> getAptPackagesToInstall() {
-        List<String> result = [ "mapr-fileserver", "mapr-tasktracker" ];
+        List<String> result = ["mapr-fileserver", "mapr-tasktracker", "mapr-metrics"];
         if (isZookeeper()) result << "mapr-zookeeper";
         return result;
     }
@@ -52,7 +64,9 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
     public M3NodeDriver getDriver() {
         return (M3NodeDriver) super.getDriver();
     }
-        
+
+    public static final BasicAttributeSensor<String> SUBNET_HOSTNAME = [String, "machine.subnet.hostname", "internally resolvable hostname"];
+
     protected Map<String,Object> getProvisioningFlags(MachineProvisioningLocation location) {
         obtainProvisioningFlags(location);
     }
