@@ -3,13 +3,13 @@ package io.cloudsoft.mapr
 import brooklyn.enricher.basic.SensorPropagatingEnricher
 import brooklyn.entity.basic.AbstractEntity
 import brooklyn.entity.basic.BasicConfigurableEntityFactory
+import brooklyn.entity.group.Cluster
 import brooklyn.entity.group.DynamicCluster
 import brooklyn.entity.trait.Startable
 import brooklyn.entity.trait.StartableMethods
 import brooklyn.event.basic.BasicConfigKey
 import brooklyn.event.basic.DependentConfiguration
 import brooklyn.location.Location
-import brooklyn.policy.autoscaling.AutoScalerPolicy
 import groovy.transform.InheritConstructors
 import io.cloudsoft.mapr.m3.AbstractM3Node
 import io.cloudsoft.mapr.m3.MasterNode
@@ -52,6 +52,11 @@ public class M3 extends AbstractEntity implements Startable {
 //                .sizeRange(2, 5)
 //                .metricRange(20.0, 80.0)
 //                .build());
+
+        Integer clusterSize = (Integer) getProperty("dynamicClusterSize");
+        if (clusterSize != null) {
+            workers.setConfig(Cluster.INITIAL_SIZE, clusterSize);
+        }
 
 
         setConfig(MASTER_UP, DependentConfiguration.attributeWhenReady(master, MasterNode.SERVICE_UP));
