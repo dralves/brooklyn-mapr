@@ -1,17 +1,11 @@
 package io.cloudsoft.mapr.m3
 
 import brooklyn.config.render.RendererHints
-import brooklyn.event.adapter.FunctionSensorAdapter
 import brooklyn.event.basic.BasicAttributeSensor
 import brooklyn.location.Location
-import brooklyn.util.MutableMap
-import groovy.sql.GroovyRowResult
-import groovy.sql.Sql
 import groovy.transform.InheritConstructors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import java.util.concurrent.Callable
 
 @InheritConstructors
 class MasterNode extends AbstractM3Node {
@@ -35,16 +29,16 @@ select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"spac
         [Double, "cluster.used.dfs.percent", "The percentage o the cluster DFS that is currently being used."];
 
 
-    public static final BasicAttributeSensor<String> MAPR_URL = [ String, "mapr.url", "URL where MapR can be accessed" ];
+    public static final BasicAttributeSensor<String> MAPR_URL = [String, "mapr.url", "URL where MapR can be accessed"];
 
     static {
         RendererHints.register(MAPR_URL, new RendererHints.NamedActionWithUrl("Open"));
     }
-    
+
     public boolean isZookeeper() { return true; }
-    
+
     public List<String> getAptPackagesToInstall() {
-        ["mapr-cldb", "mapr-jobtracker", "mapr-nfs", "mapr-webserver", "mysql-server"] + super.getAptPackagesToInstall();
+        ["mapr-cldb", "mapr-jobtracker", "mapr-nfs", "mapr-webserver", "mapr-zookeeper", "mysql-server"] + super.getAptPackagesToInstall();
     }
 
     public void setupAdminUser() {
@@ -64,15 +58,15 @@ select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"spac
     public void startMasterServices() {
         // start the services
         driver.exec(["sudo /opt/mapr/bin/maprcli node services -nodes ${getAttribute(SUBNET_HOSTNAME)} -nfs start"]);
-    }    
-    
+    }
+
     public void runMaprPhase2() {
         driver.startWarden();
         setupAdminUser();
         startMasterServices();
-        
+
         // not sure this sleep is necessary, but seems safer...
-        Thread.sleep(10*1000);
+        Thread.sleep(10 * 1000);
         setAttribute(MAPR_URL, "https://${getAttribute(HOSTNAME)}:8443")
 
 //        FunctionSensorAdapter dfsUsageSensor = sensorRegistry.register(new FunctionSensorAdapter(
@@ -110,7 +104,7 @@ select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"spac
 
     public void start(Collection<? extends Location> locations) {
         if (!getPassword())
-            throw new IllegalArgumentException("configuration "+MAPR_PASSWORD.getName()+" must be specified");
+            throw new IllegalArgumentException("configuration " + MAPR_PASSWORD.getName() + " must be specified");
         super.start(locations);
     }
 

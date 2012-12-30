@@ -6,6 +6,10 @@ import io.cloudsoft.mapr.M3;
 @InheritConstructors
 class ZookeeperWorkerNode extends AbstractM3Node {
 
+    public List<String> getAptPackagesToInstall() {
+        return ["mapr-zookeeper"] + super.getAptPackagesToInstall();
+    }
+
     public boolean isZookeeper() { return true; }
 
     public void runMaprPhase2() {

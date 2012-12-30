@@ -8,6 +8,10 @@ import org.slf4j.LoggerFactory
 @InheritConstructors
 class WorkerNode extends AbstractM3Node {
 
+    public List<String> getAptPackagesToInstall() {
+        return ["mapr-fileserver", "mapr-tasktracker"] + super.getAptPackagesToInstall();
+    }
+
     public static final Logger log = LoggerFactory.getLogger(WorkerNode.class);
 
     public void runMaprPhase2() {

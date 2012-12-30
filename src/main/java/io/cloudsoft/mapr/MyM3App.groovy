@@ -34,14 +34,19 @@ public class MyM3App extends AbstractApplication {
         // setting on the root will provide a default which is inherited everywhere 
         // this default is an on-disk flat-file
         setConfig(AbstractM3Node.DISK_SETUP_SPEC,
-            M3Disks.builder().
-                disks(
-                    "/mnt/mapr-storagefile1", 
-                    "/mnt/mapr-storagefile2").
-                commands(
-                    "sudo truncate -s 4G /mnt/mapr-storagefile1",
-                    "sudo truncate -s 4G /mnt/mapr-storagefile2").
-                build() );
+//            M3Disks.builder().
+//                disks(
+//                    "/mnt/mapr-storagefile1",
+//                    "/mnt/mapr-storagefile2").
+//                commands(
+//                    "sudo truncate -s 4G /mnt/mapr-storagefile1",
+//                    "sudo truncate -s 4G /mnt/mapr-storagefile2").
+//                build() );
+
+                M3Disks.builder().
+                        disks("/dev/sdb").
+//                        commands("sudo mkdir /mnt/disk1;sudo /usr/share/google/safe_format_and_mount -m \"mkfs.ext4 -F\" /dev/sdb /mnt/disk1").
+                        build());
 
         // show URL at top level
         SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(this);
@@ -55,6 +60,9 @@ public class MyM3App extends AbstractApplication {
         List args = new ArrayList(Arrays.asList(argv));
 
         System.setProperty("jclouds.google-compute.login-credential", pk);
+        System.setProperty("jclouds.ssh.max-retries", 20 + "");
+        System.setProperty("jclouds.so-timeout", 120 * 1000 + "");
+        System.setProperty("jclouds.connection-timeout", 120 * 1000 + "");
 
         MyM3App app = new MyM3App();
 

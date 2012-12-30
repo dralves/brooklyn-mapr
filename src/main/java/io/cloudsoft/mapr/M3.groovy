@@ -42,7 +42,7 @@ public class M3 extends AbstractEntity implements Startable {
 
     // The Dynamic cluster
     DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode),
-            initialSize: 2);
+            initialSize: 10);
 
     {
 
@@ -53,10 +53,10 @@ public class M3 extends AbstractEntity implements Startable {
 //                .metricRange(20.0, 80.0)
 //                .build());
 
-        Integer clusterSize = (Integer) getProperty("dynamicClusterSize");
-        if (clusterSize != null) {
-            workers.setConfig(Cluster.INITIAL_SIZE, clusterSize);
-        }
+//        Integer clusterSize = (Integer) getProperty("dynamicClusterSize");
+//        if (clusterSize != null) {
+//            workers.setConfig(Cluster.INITIAL_SIZE, clusterSize);
+//        }
 
 
         setConfig(MASTER_UP, DependentConfiguration.attributeWhenReady(master, MasterNode.SERVICE_UP));
