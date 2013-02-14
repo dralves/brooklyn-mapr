@@ -42,7 +42,7 @@ public class M3 extends AbstractEntity implements Startable {
 
     // The Dynamic cluster
     DynamicCluster workers = new DynamicCluster(this, factory: new BasicConfigurableEntityFactory(WorkerNode),
-            initialSize: 10);
+            initialSize: 1);
 
     {
 

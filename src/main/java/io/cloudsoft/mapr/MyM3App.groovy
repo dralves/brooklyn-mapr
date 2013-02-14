@@ -19,9 +19,9 @@ import static com.google.common.base.Preconditions.checkState
 public class MyM3App extends AbstractApplication {
 
     final static String DEFAULT_LOCATION =
-        "google-compute";
+//        "google-compute";
 //        "cloudstack-citrix";
-//        "aws-ec2-us-east-1-centos";
+        "blabla-aws-ec2-us-east-1-centos";
 
     M3 m3 = new M3(this);
 
@@ -76,6 +76,7 @@ public class MyM3App extends AbstractApplication {
                 webconsolePort(getCommandLineOption(args, "--port", "8081+")).
                 managing(app).
                 launch();
+
 
         List<Location> locations = server.getManagementContext().getLocationRegistry().resolve(args ?: [DEFAULT_LOCATION])
         app.start(locations)

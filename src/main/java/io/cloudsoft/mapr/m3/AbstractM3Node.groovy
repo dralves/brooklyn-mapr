@@ -74,7 +74,7 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
         Map flags = [:]; //super.obtainProvisioningFlags(location); 
         flags.templateBuilder = new PortableTemplateBuilder().
                 imageNameMatches("gcel-12-04-v20121106")
-                .hardwareId("n1-standard-1-d");
+                .hardwareId("m3.2xlarge");
 
 
 
