@@ -65,7 +65,6 @@ public class MyM3App extends AbstractApplication {
 //                setAttribute("privateKeyData", null).
 //                setAttribute("privateKeyFile", null).
 //                setAttribute("publicKeyFile", null).
-//                setAttribute("donCreateUser", "true").
 //                setAttribute("dynamicClusterSize", Integer.parseInt(getCommandLineOption(args, "--dynamic-cluster-size", "2"))).
 //                webconsolePort(getCommandLineOption(args, "--port", "8081+")).
 //                managing(app).
@@ -73,6 +72,7 @@ public class MyM3App extends AbstractApplication {
 
         List args = new ArrayList(Arrays.asList(argv));
         BrooklynServerDetails server = BrooklynLauncher.newLauncher().
+//                setAttribute("dynamicClusterSize", Integer.parseInt(getCommandLineOption(args, "--dynamic-cluster-size", "2"))).
                 webconsolePort(CommandLineUtil.getCommandLineOption(args, "--port", "8081+")).
                 managing(app).
                 launch();

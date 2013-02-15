@@ -54,9 +54,9 @@ public class M3 extends AbstractEntity implements Startable {
                 .metricRange(20.0, 80.0)
                 .build());
 
-        Integer clusterSize = (Integer) getProperty("dynamicClusterSize");
+        Integer clusterSize = null; //(Integer) getProperty("dynamicClusterSize");
         if (clusterSize != null) {
-            workers.setConfig(Cluster.INITIAL_SIZE, clusterSize);
+            workers.setConfig(Cluster.INITIAL_SIZE, 2);
         }
 
 

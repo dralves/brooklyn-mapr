@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>io.cloudsoft.mapr</groupId>
     <artifactId>brooklyn-mapr</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    
+
     <name>Brooklyn MapR Descriptor</name>
 
     <properties>
@@ -36,11 +36,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jclouds.labs</groupId>
-            <artifactId>google-compute</artifactId>
-            <version>1.6.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.6</version>
@@ -58,15 +53,15 @@
             <id>cloudsoft-releases</id>
             <url>http://developers.cloudsoftcorp.com/download/maven2/</url>
         </repository>
-            <repository>
-                <id>libs-snapshot-local</id>
-                <url>http://ccweb.cloudsoftcorp.com/maven/libs-snapshot-local/</url>
-                <snapshots>
-                    <enabled>true</enabled>
-                    <updatePolicy>never</updatePolicy>
-                    <checksumPolicy>fail</checksumPolicy>
-               </snapshots>
-         </repository>
+        <repository>
+            <id>libs-snapshot-local</id>
+            <url>http://ccweb.cloudsoftcorp.com/maven/libs-snapshot-local/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
     </repositories>
 
     <build>
