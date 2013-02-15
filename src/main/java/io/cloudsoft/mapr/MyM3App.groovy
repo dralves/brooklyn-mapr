@@ -5,13 +5,13 @@ import brooklyn.entity.basic.AbstractApplication
 import brooklyn.launcher.BrooklynLauncher
 import brooklyn.launcher.BrooklynServerDetails
 import brooklyn.location.Location
+import brooklyn.util.CommandLineUtil
 import com.google.common.base.Charsets
 import com.google.common.io.Files
 import io.cloudsoft.mapr.m3.AbstractM3Node
 import io.cloudsoft.mapr.m3.M3Disks
 import io.cloudsoft.mapr.m3.MasterNode
 
-import static brooklyn.util.CommandLineUtil.getCommandLineOption
 import static com.google.common.base.Preconditions.checkNotNull
 import static com.google.common.base.Preconditions.checkState
 
@@ -19,9 +19,9 @@ import static com.google.common.base.Preconditions.checkState
 public class MyM3App extends AbstractApplication {
 
     final static String DEFAULT_LOCATION =
-//        "google-compute";
+        "aws-ec2:us-east-1";
 //        "cloudstack-citrix";
-        "blabla-aws-ec2-us-east-1-centos";
+//        "aws-ec2-us-east-1-centos";
 
     M3 m3 = new M3(this);
 
@@ -34,18 +34,13 @@ public class MyM3App extends AbstractApplication {
         // setting on the root will provide a default which is inherited everywhere 
         // this default is an on-disk flat-file
         setConfig(AbstractM3Node.DISK_SETUP_SPEC,
-//            M3Disks.builder().
-//                disks(
-//                    "/mnt/mapr-storagefile1",
-//                    "/mnt/mapr-storagefile2").
-//                commands(
-//                    "sudo truncate -s 4G /mnt/mapr-storagefile1",
-//                    "sudo truncate -s 4G /mnt/mapr-storagefile2").
-//                build() );
-
                 M3Disks.builder().
-                        disks("/dev/sdb").
-//                        commands("sudo mkdir /mnt/disk1;sudo /usr/share/google/safe_format_and_mount -m \"mkfs.ext4 -F\" /dev/sdb /mnt/disk1").
+                        disks(
+                                "/mnt/mapr-storagefile1",
+                                "/mnt/mapr-storagefile2").
+                        commands(
+                                "sudo truncate -s 20G /mnt/mapr-storagefile1",
+                                "sudo truncate -s 10G /mnt/mapr-storagefile2").
                         build());
 
         // show URL at top level
@@ -54,26 +49,31 @@ public class MyM3App extends AbstractApplication {
 
     // can start in AWS by running this -- or use brooklyn CLI/REST for most clouds, or programmatic/config for set of fixed IP machines
     public static void main(String[] argv) {
-        String credential = loadFileContentsFromPathAsSystemProperty("credential");
-        String pk = loadFileContentsFromPathAsSystemProperty("privateKeyFile");
+//        String credential = loadFileContentsFromPathAsSystemProperty("credential");
+//        String pk = loadFileContentsFromPathAsSystemProperty("privateKeyFile");
 
-        List args = new ArrayList(Arrays.asList(argv));
+//        List args = new ArrayList(Arrays.asList(argv));
 
-        System.setProperty("jclouds.google-compute.login-credential", pk);
         System.setProperty("jclouds.ssh.max-retries", 20 + "");
         System.setProperty("jclouds.so-timeout", 120 * 1000 + "");
         System.setProperty("jclouds.connection-timeout", 120 * 1000 + "");
 
         MyM3App app = new MyM3App();
 
+//        BrooklynServerDetails server = BrooklynLauncher.newLauncher().
+//                setAttribute("credential", credential).
+//                setAttribute("privateKeyData", null).
+//                setAttribute("privateKeyFile", null).
+//                setAttribute("publicKeyFile", null).
+//                setAttribute("donCreateUser", "true").
+//                setAttribute("dynamicClusterSize", Integer.parseInt(getCommandLineOption(args, "--dynamic-cluster-size", "2"))).
+//                webconsolePort(getCommandLineOption(args, "--port", "8081+")).
+//                managing(app).
+//                launch();
+
+        List args = new ArrayList(Arrays.asList(argv));
         BrooklynServerDetails server = BrooklynLauncher.newLauncher().
-                setAttribute("credential", credential).
-                setAttribute("privateKeyData", null).
-                setAttribute("privateKeyFile", null).
-                setAttribute("publicKeyFile", null).
-                setAttribute("donCreateUser", "true").
-                setAttribute("dynamicClusterSize", Integer.parseInt(getCommandLineOption(args, "--dynamic-cluster-size", "2"))).
-                webconsolePort(getCommandLineOption(args, "--port", "8081+")).
+                webconsolePort(CommandLineUtil.getCommandLineOption(args, "--port", "8081+")).
                 managing(app).
                 launch();
 
@@ -90,7 +90,6 @@ public class MyM3App extends AbstractApplication {
         String pk = Files.toString(file, Charsets.UTF_8);
         return pk;
     }
-
 
 
 }

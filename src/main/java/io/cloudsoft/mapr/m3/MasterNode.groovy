@@ -1,11 +1,17 @@
 package io.cloudsoft.mapr.m3
 
 import brooklyn.config.render.RendererHints
+import brooklyn.event.adapter.FunctionSensorAdapter
 import brooklyn.event.basic.BasicAttributeSensor
 import brooklyn.location.Location
+import brooklyn.util.MutableMap
+import groovy.sql.GroovyRowResult
+import groovy.sql.Sql
 import groovy.transform.InheritConstructors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.util.concurrent.Callable
 
 @InheritConstructors
 class MasterNode extends AbstractM3Node {
@@ -69,35 +75,35 @@ select a.EVENT_TIME as \"timestamp\", a.NODE_ID as \"node\", a.M_VALUE as \"spac
         Thread.sleep(10 * 1000);
         setAttribute(MAPR_URL, "https://${getAttribute(HOSTNAME)}:8443")
 
-//        FunctionSensorAdapter dfsUsageSensor = sensorRegistry.register(new FunctionSensorAdapter(
-//                MutableMap.of("period", 1 * 5000),
-//                new Callable<Double>() {
-//                    public Double call() {
-//                        // creating a new sql per query isnt the way to go
-//                        def sql = Sql.newInstance("jdbc:mysql://${getAttribute(HOSTNAME)}:3306/metrics", getUser(), getPassword());
-//
-//                        List<GroovyRowResult> usedSpace = []
-//                        sql.eachRow(usedSpaceQuery) {
-//                            usedSpace << it.toRowResult()
-//                        }
-//                        List<GroovyRowResult> availSpace = []
-//                        sql.eachRow(availSpaceQuery) {
-//                            availSpace << it.toRowResult()
-//                        }
-//
-//                        int sumUsed = 0;
-//                        int sumAvail = 0;
-//                        for (int i = 0; i < usedSpace.size(); i++) {
-//                            def used = usedSpace[i];
-//                            def avail = availSpace[i];
-//                            sumUsed += used.get("space");
-//                            sumAvail += avail.get("space");
-//                        }
-//                        log.info("current dfs usage: " + 100 * sumUsed / (sumUsed + sumAvail));
-//                        return 100 * sumUsed / (sumUsed + sumAvail);
-//                    }
-//                }));
-//        dfsUsageSensor.poll(CLUSTER_USED_DFS_PERCENT);
+        FunctionSensorAdapter dfsUsageSensor = sensorRegistry.register(new FunctionSensorAdapter(
+                MutableMap.of("period", 1 * 5000),
+                new Callable<Double>() {
+                    public Double call() {
+                        // creating a new sql per query isnt the way to go
+                        def sql = Sql.newInstance("jdbc:mysql://${getAttribute(HOSTNAME)}:3306/metrics", getUser(), getPassword());
+
+                        List<GroovyRowResult> usedSpace = []
+                        sql.eachRow(usedSpaceQuery) {
+                            usedSpace << it.toRowResult()
+                        }
+                        List<GroovyRowResult> availSpace = []
+                        sql.eachRow(availSpaceQuery) {
+                            availSpace << it.toRowResult()
+                        }
+
+                        int sumUsed = 0;
+                        int sumAvail = 0;
+                        for (int i = 0; i < usedSpace.size(); i++) {
+                            def used = usedSpace[i];
+                            def avail = availSpace[i];
+                            sumUsed += used.get("space");
+                            sumAvail += avail.get("space");
+                        }
+                        log.info("current dfs usage: " + 100 * sumUsed / (sumUsed + sumAvail));
+                        return 100 * sumUsed / (sumUsed + sumAvail);
+                    }
+                }));
+        dfsUsageSensor.poll(CLUSTER_USED_DFS_PERCENT);
 
 
     }

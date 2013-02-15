@@ -8,6 +8,7 @@ import brooklyn.event.basic.BasicAttributeSensor
 import brooklyn.event.basic.BasicConfigKey
 import brooklyn.location.MachineProvisioningLocation
 import brooklyn.location.basic.jclouds.templates.PortableTemplateBuilder
+import org.jclouds.compute.domain.OsFamily
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -71,14 +72,12 @@ abstract class AbstractM3Node extends SoftwareProcessEntity implements Startable
     }
 
     protected Map<String, Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
-        Map flags = [:]; //super.obtainProvisioningFlags(location); 
+        Map flags = [:]; //super.obtainProvisioningFlags(location);
         flags.templateBuilder = new PortableTemplateBuilder().
-                imageNameMatches("gcel-12-04-v20121106")
-                .hardwareId("m3.2xlarge");
+                osFamily(OsFamily.UBUNTU).osVersionMatches("11.04").os64Bit(true).
+                minRam(2560);
 
-
-
-        flags.userName = "dralves";
+        flags.userName = "ubuntu";
         flags.inboundPorts =
         // from: http://www.mapr.com/doc/display/MapR/Ports+Used+by+MapR
             [22, 2048, 5660, 5181, 7221, 7222, 8080, 8443, 9001, 9997, 9998, 50030, 50060, 60000] +
