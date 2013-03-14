@@ -4,8 +4,14 @@ import io.cloudsoft.mapr.m3.AbstractM3Node;
 import io.cloudsoft.mapr.m3.M3Disks;
 import io.cloudsoft.mapr.m3.MasterNode;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
+import org.jclouds.googlecompute.GoogleComputeApiMetadata;
+import org.jclouds.util.Strings2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +37,7 @@ public class MyM3App extends AbstractApplication {
     private static final Logger log = LoggerFactory.getLogger(MyM3App.class);
 
     final static String DEFAULT_LOCATION =
-        "aws-ec2:us-east-1";
+        "google-compute";
 //        "cloudstack-citrix";
 //        "aws-ec2-us-east-1-centos";
 
@@ -59,10 +65,16 @@ public class MyM3App extends AbstractApplication {
         SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(this);
     }
 
-    public static void main(String[] argv) {
+    public static void main(String[] argv) throws IOException {
+        if (System.getProperty("credential") != null && new File(System.getProperty("credential")).exists()){
+          System.setProperty("credential", Strings2.toStringAndClose(new FileInputStream(System.getProperty("credential"))));
+          System.setProperty("jclouds.template", GoogleComputeApiMetadata.defaultProperties().getProperty("jclouds.template"));
+        }
+
         System.setProperty("jclouds.ssh.max-retries", 20 + "");
         System.setProperty("jclouds.so-timeout", 120 * 1000 + "");
         System.setProperty("jclouds.connection-timeout", 120 * 1000 + "");
+
 
         List<String> args = Lists.newArrayList(argv);
         String port =  CommandLineUtil.getCommandLineOption(args, "--port", "8081+");
