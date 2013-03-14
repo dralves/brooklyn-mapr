@@ -26,6 +26,26 @@
                     <groupId>ch.qos.logback</groupId>
                     <artifactId>logback-classic</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.jclouds</groupId>
+                    <artifactId>jclouds-allcompute</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.brooklyn</groupId>
+                    <artifactId>brooklyn-systems-whirr</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.brooklyn</groupId>
+                    <artifactId>brooklyn-systems-hadoop</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jclouds.driver</groupId>
+                    <artifactId>jclouds-sshj</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -44,7 +64,26 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.6.4</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-allcompute</artifactId>
+            <version>1.6.0-rc.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>google-compute</artifactId>
+            <version>1.6.0-rc.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds.driver</groupId>
+            <artifactId>jclouds-sshj</artifactId>
+            <version>1.6.0-rc.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.12</version>
+        </dependency>
     </dependencies>
 
     <repositories>

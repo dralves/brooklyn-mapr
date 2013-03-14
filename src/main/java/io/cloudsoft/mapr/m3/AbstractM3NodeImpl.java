@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.domain.TemplateBuilderSpec;
+import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.googlecompute.compute.options.GoogleComputeTemplateOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,12 +88,21 @@ public abstract class AbstractM3NodeImpl extends SoftwareProcessImpl implements 
    protected Map<String, Object> obtainProvisioningFlags(MachineProvisioningLocation location) {
       Map flags = super.obtainProvisioningFlags(location); 
       Iterable<Integer> superInboundPorts = (Iterable<Integer>) flags.get("inboundPorts");
-      
-      flags.put("templateBuilder", new PortableTemplateBuilder().
-              osFamily(OsFamily.UBUNTU).osVersionMatches("11.04").os64Bit(true).
-              minRam(2560));
 
-      flags.put("userName", "ubuntu");
+      TemplateBuilder builder =  new PortableTemplateBuilder()
+        .osFamily(OsFamily.UBUNTU)
+        .osVersionMatches("12.04")
+        .os64Bit(true).minRam(2560);
+
+      if (System.getProperty("jclouds.template") == null) {
+        flags.put("templateBuilder", builder);
+      } else {
+        flags.put("templateBuilder", TemplateBuilderSpec
+          .parse(System.getProperty("jclouds.template"))
+          .copyTo(builder, new GoogleComputeTemplateOptions()));
+      }
+
+      flags.put("userName", "jclouds");
       
       // from: http://www.mapr.com/doc/display/MapR/Ports+Used+by+MapR
       // 3888 discovered also to be needed; 2888 included for good measure
