@@ -1,25 +1,22 @@
 package io.cloudsoft.mapr.m3;
 
-import java.util.List;
-import java.util.Map;
-
-import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.compute.domain.TemplateBuilderSpec;
-import org.jclouds.compute.options.TemplateOptions;
-import org.jclouds.googlecompute.compute.options.GoogleComputeTemplateOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Lifecycle;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.location.MachineProvisioningLocation;
 import brooklyn.location.jclouds.templates.PortableTemplateBuilder;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.domain.TemplateBuilderSpec;
+import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractM3NodeImpl extends SoftwareProcessImpl implements AbstractM3Node {
 
@@ -94,13 +91,14 @@ public abstract class AbstractM3NodeImpl extends SoftwareProcessImpl implements 
         .osVersionMatches("12.04")
         .os64Bit(true).minRam(2560);
 
+      flags.put("groupId", "brooklyn-mapr");
       if (System.getProperty("jclouds.template") == null) {
         flags.put("templateBuilder", builder);
         flags.put("userName", "ubuntu");
       } else {
         flags.put("templateBuilder", TemplateBuilderSpec
           .parse(System.getProperty("jclouds.template"))
-          .copyTo(builder, new GoogleComputeTemplateOptions()));
+          .copyTo(builder, new GoogleComputeEngineTemplateOptions()));
         flags.put("userName", "jclouds");
       }
       

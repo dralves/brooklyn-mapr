@@ -3,16 +3,16 @@ package io.cloudsoft.mapr;
 import com.google.common.collect.Sets;
 import org.jclouds.Context;
 import org.jclouds.ContextBuilder;
-import org.jclouds.googlecompute.GoogleComputeApi;
-import org.jclouds.googlecompute.GoogleComputeApiMetadata;
-import org.jclouds.googlecompute.domain.Firewall;
-import org.jclouds.googlecompute.domain.Instance;
-import org.jclouds.googlecompute.domain.Network;
-import org.jclouds.googlecompute.domain.Operation;
-import org.jclouds.googlecompute.features.FirewallApi;
-import org.jclouds.googlecompute.features.InstanceApi;
-import org.jclouds.googlecompute.features.NetworkApi;
-import org.jclouds.googlecompute.predicates.OperationDonePredicate;
+import org.jclouds.googlecomputeengine.GoogleComputeEngineApi;
+import org.jclouds.googlecomputeengine.GoogleComputeEngineApiMetadata;
+import org.jclouds.googlecomputeengine.domain.Firewall;
+import org.jclouds.googlecomputeengine.domain.Instance;
+import org.jclouds.googlecomputeengine.domain.Network;
+import org.jclouds.googlecomputeengine.domain.Operation;
+import org.jclouds.googlecomputeengine.features.FirewallApi;
+import org.jclouds.googlecomputeengine.features.InstanceApi;
+import org.jclouds.googlecomputeengine.features.NetworkApi;
+import org.jclouds.googlecomputeengine.predicates.OperationDonePredicate;
 import org.jclouds.util.Predicates2;
 import org.jclouds.util.Strings2;
 
@@ -35,18 +35,18 @@ public class Cleaner {
     String projectName = "590421487852";
 
     Properties properties = new Properties();
-    properties.setProperty("google-compute.credential", Strings2.toStringAndClose(new FileInputStream("cloudsoft-gce-pk.pem")));
-    properties.setProperty("google-compute.identity", projectName + "@developer.gserviceaccount.com");
+    properties.setProperty("google-compute-engine.credential", Strings2.toStringAndClose(new FileInputStream("cloudsoft-gce-pk.pem")));
+    properties.setProperty("google-compute-engine.identity", projectName + "@developer.gserviceaccount.com");
 
     Context context = ContextBuilder
-      .newBuilder(new GoogleComputeApiMetadata())
+      .newBuilder(new GoogleComputeEngineApiMetadata())
       .overrides(properties)
       .build();
 
-    final GoogleComputeApi api = context
+    final GoogleComputeEngineApi api = context
       .getUtils()
       .getInjector()
-      .getInstance(GoogleComputeApi.class);
+      .getInstance(GoogleComputeEngineApi.class);
 
     final OperationDonePredicate predicate = context.getUtils().getInjector().getInstance(OperationDonePredicate.class);
 
@@ -87,6 +87,8 @@ public class Cleaner {
 
     service = Executors.newFixedThreadPool(networks.size() != 0 ? networks.size() : 1);
     for (final Network network : networks) {
+      if (network.getName().equals("default"))
+        continue;
       service.submit(new Runnable() {
         @Override
         public void run() {
