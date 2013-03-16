@@ -13,7 +13,6 @@ import com.google.common.collect.Lists;
 import io.cloudsoft.mapr.m3.AbstractM3Node;
 import io.cloudsoft.mapr.m3.M3Disks;
 import io.cloudsoft.mapr.m3.MasterNode;
-import org.jclouds.googlecomputeengine.GoogleComputeEngineApiMetadata;
 import org.jclouds.util.Strings2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,7 @@ public class MyM3App extends ApplicationBuilder {
     private static final Logger log = LoggerFactory.getLogger(MyM3App.class);
 
     final static String DEFAULT_LOCATION =
-        "google-compute-engine";
+        "google-compute";
 //        "cloudstack-citrix";
 //        "aws-ec2-us-east-1-centos";
 
@@ -58,10 +57,6 @@ public class MyM3App extends ApplicationBuilder {
     }
 
     public static void main(String[] argv) throws IOException {
-        if (System.getProperty("credential") != null && new File(System.getProperty("credential")).exists()){
-          System.setProperty("credential", Strings2.toStringAndClose(new FileInputStream(System.getProperty("credential"))));
-          System.setProperty("jclouds.template", GoogleComputeEngineApiMetadata.defaultProperties().getProperty("jclouds.template"));
-        }
 
         System.setProperty("jclouds.ssh.max-retries", 20 + "");
         System.setProperty("jclouds.so-timeout", 120 * 1000 + "");
@@ -71,6 +66,11 @@ public class MyM3App extends ApplicationBuilder {
         List<String> args = Lists.newArrayList(argv);
         String port =  CommandLineUtil.getCommandLineOption(args, "--port", "8081+");
         String location = CommandLineUtil.getCommandLineOption(args, "--location", DEFAULT_LOCATION);
+
+        if (location.startsWith("google-compute") && System.getProperty("credential") != null && new File(System.getProperty("credential")).exists()) {
+          System.setProperty("credential", Strings2.toStringAndClose(new FileInputStream(System.getProperty("credential"))));
+          System.setProperty("jclouds.template", "osFamily=GCEL,osVersionMatches=1[012].[01][04],locationId=us-central1-a,loginUser=jclouds");
+        }
 
         BrooklynServerDetails server = BrooklynLauncher.newLauncher()
                 .webconsolePort(port)

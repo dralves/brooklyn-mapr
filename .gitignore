@@ -4,3 +4,4 @@ test-output
 .classpath
 .settings
 *.log
+src/main/java/io/cloudsoft/mapr/Cleaner.java

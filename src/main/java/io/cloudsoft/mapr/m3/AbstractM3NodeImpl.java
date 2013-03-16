@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableSet;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.domain.TemplateBuilderSpec;
-import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
+import org.jclouds.compute.options.TemplateOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +98,7 @@ public abstract class AbstractM3NodeImpl extends SoftwareProcessImpl implements 
       } else {
         flags.put("templateBuilder", TemplateBuilderSpec
           .parse(System.getProperty("jclouds.template"))
-          .copyTo(builder, new GoogleComputeEngineTemplateOptions()));
+          .copyTo(builder, new TemplateOptions()));
         flags.put("userName", "jclouds");
       }
       
