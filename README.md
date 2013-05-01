@@ -10,6 +10,8 @@ and a sample application which deploys it to Amazon.
 
 To compile brooklyn-mapr, simply `mvn clean install` in the project root.
 
+Note: If this is a new machine run `ssh-keygen -t rsa` and `ssh-keygen -t dsa` to generate RSA and DSA keys in `~/.ssh`.
+Then, copy the generated keys to `~/.ssh/authorized_keys` for the build user.
 
 ### Run
 
@@ -34,7 +36,7 @@ policy to automatically scale out.  (See other Brooklyn examples for an illustra
 
 ### Setup
 
-In both cases you'll need AWS credentials in `~/.brooklyn/brooklyn.properties`:
+In both cases you'll need AWS credentials in `~/.brooklyn/brooklyn.properties`.
 
   brooklyn.jclouds.aws-ec2.identity=AKXXXXXXXXXXXXXXXXXX
   brooklyn.jclouds.aws-ec2.credential=secret01xxxxxxxxxxxxxxxxxxxxxxxxxxx
