@@ -1,6 +1,5 @@
 
-Brooklyn MapR Roll-out
-======================
+# Brooklyn MapR Roll-out
 
 This project contains Brooklyn entities for the components of a MapR M3 system,
 and a sample application which deploys it to Amazon.
@@ -17,12 +16,14 @@ Then, copy the generated keys to `~/.ssh/authorized_keys` for the build user.
 
 To run it, either:
 
-* Download and install the `brooklyn` CLI tool from http://brooklyncentral.github.com/ and run in the project root:
+* Download and install the `brooklyn` CLI tool from [brooklyncentral.github.com](http://brooklyncentral.github.com/) and run in the project root.
 
-  export BROOKLYN_CLASSPATH=target/brooklyn-mapr-0.1.0-SNAPSHOT.jar 
-  brooklyn launch -a io.cloudsoft.mapr.MyM3App -l aws-ec2:us-east-1
+	
+	`export BROOKLYN_CLASSPATH=target/brooklyn-mapr-0.1.0-SNAPSHOT.jar`
+	
+	`brooklyn launch -a io.cloudsoft.mapr.MyM3App -l aws-ec2:us-east-1`
 
-* Grab all dependencies (using maven, or in your favourite IDE) and run the static `main` in `io.cloudsoft.mapr.MyM3App`
+* or, Grab all dependencies (using maven, or in your favourite IDE) and run the static `main` in `io.cloudsoft.mapr.MyM3App`
 
 After about 20 minutes, it should print out the URL of the MapR master node and the Brooklyn console.  
 You must manually accept the license in MapR (credentials defined in MyM3App), 
@@ -38,8 +39,8 @@ policy to automatically scale out.  (See other Brooklyn examples for an illustra
 
 In both cases you'll need AWS credentials in `~/.brooklyn/brooklyn.properties`.
 
-  brooklyn.jclouds.aws-ec2.identity=AKXXXXXXXXXXXXXXXXXX
-  brooklyn.jclouds.aws-ec2.credential=secret01xxxxxxxxxxxxxxxxxxxxxxxxxxx
+	brooklyn.jclouds.aws-ec2.identity=AKXXXXXXXXXXXXXXXXXX
+	brooklyn.jclouds.aws-ec2.credential=secret01xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 Most other clouds should work too, with minor variations to the code (in particular the disk setup in MyM3App),
 as will fixed IP machines (bare-metal/byon).  MaaS clouds (metal-as-a-service) are in development, over at jclouds.org.
@@ -47,7 +48,6 @@ as will fixed IP machines (bare-metal/byon).  MaaS clouds (metal-as-a-service) a
 
 ### Finally
 
-This software is (c) 2012 Cloudsoft Corporation, released as open source under the Apache License v2.0.
+This software is (c) 2013 Cloudsoft Corporation, released as open source under the Apache License v2.0.
 
-Any questions drop a line to brooklyn-users@googlegroups.com !
-
+Any questions drop a line to [brooklyn-users@googlegroups.com](http://groups.google.com/group/brooklyn-users‎).
