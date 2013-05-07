@@ -1,26 +1,29 @@
 package io.cloudsoft.mapr.m3;
 
-import brooklyn.config.BrooklynLogging;
-import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
-import brooklyn.entity.basic.SoftwareProcessDriver;
-import brooklyn.entity.basic.lifecycle.CommonCommands;
-import brooklyn.entity.trait.Startable;
-import brooklyn.location.basic.SshMachineLocation;
-import brooklyn.location.basic.jclouds.JcloudsLocation.JcloudsSshMachineLocation;
-import brooklyn.util.MutableMap;
-import com.google.common.collect.ImmutableMap;
+import static com.google.common.base.Joiner.on;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.ImmutableList.of;
+import static java.lang.String.format;
 import io.cloudsoft.mapr.M3;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.lang.String.format;
-import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.ImmutableList.of;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import brooklyn.config.BrooklynLogging;
+import brooklyn.entity.basic.AbstractSoftwareProcessSshDriver;
+import brooklyn.entity.basic.EntityLocal;
+import brooklyn.entity.basic.SoftwareProcessDriver;
+import brooklyn.entity.basic.lifecycle.CommonCommands;
+import brooklyn.entity.trait.Startable;
+import brooklyn.location.basic.SshMachineLocation;
+import brooklyn.location.jclouds.JcloudsSshMachineLocation;
+import brooklyn.util.MutableMap;
+
+import com.google.common.collect.ImmutableMap;
 
 public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements SoftwareProcessDriver {
 
@@ -34,13 +37,16 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
     public static final String DISKS_TXT_FQP = "/tmp/disks.txt";
 
     private boolean running = false;
-   private AbstractM3Node entity;
 
-   public M3NodeDriver(AbstractM3Node entity, SshMachineLocation machine) {
+   public M3NodeDriver(AbstractM3NodeImpl entity, SshMachineLocation machine) {
       super(entity, machine);
-      this.entity = entity;
    }
 
+   @Override
+   public AbstractM3NodeImpl getEntity() {
+      return (AbstractM3NodeImpl) super.getEntity();
+   }
+   
    public void repoUpdate() {
       exec(of(
               "if [ -f " + APT_GET_FILE + " ] ; then\n" +
@@ -75,8 +81,8 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
    public void repoInstall() {
       exec(of(
               CommonCommands.installPackage(ImmutableMap.of(
-                      "apt", "--allow-unauthenticated " + on(" ").join(entity.getAptPackagesToInstall()),
-                      "yum", on(" ").join(entity.getAptPackagesToInstall())), null
+                      "apt", "--allow-unauthenticated " + on(" ").join(getEntity().getAptPackagesToInstall()),
+                      "yum", on(" ").join(getEntity().getAptPackagesToInstall())), null
               )));
    }
 
@@ -85,8 +91,8 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
    }
    
    public void configureMapR() {
-      String masterHostname = entity.getConfig(M3.MASTER_HOSTNAME);
-      String zkHostnames = on(",").join(entity.getConfig(M3.ZOOKEEPER_HOSTNAMES));
+      String masterHostname = getEntity().getConfig(M3.MASTER_HOSTNAME);
+      String zkHostnames = on(",").join(getEntity().getConfig(M3.ZOOKEEPER_HOSTNAMES));
       exec(of(
               // cldb (java) complains it needs at least 160k, on centos with openjdk7
               // problem in v1.7.x but fixed by v2.1.1
@@ -100,7 +106,7 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
       //wait for machine to settle down... if it has trouble running script early
 //        Thread.sleep(60*1000);
         
-        DiskSetupSpec disks = entity.getConfig(AbstractM3Node.DISK_SETUP_SPEC);
+        DiskSetupSpec disks = getEntity().getConfig(AbstractM3Node.DISK_SETUP_SPEC);
         if (disks==null) throw new IllegalStateException("DISK_SETUP_SPEC is required for all nodes");
 
       log.info(getEntity() + ": setting up disks");
@@ -132,10 +138,10 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
       } catch (InterruptedException e) {
          propagate(e);
       }
-      if (!entity.isZookeeper()) throw new IllegalStateException(getEntity() + " is not a zookeeper node");
+      if (!getEntity().isZookeeper()) throw new IllegalStateException(getEntity() + " is not a zookeeper node");
       log.info(getEntity() + ": start zookeeper (" + getMachine() + ")");
       exec(of("sudo nohup /etc/init.d/mapr-zookeeper start"));
-      entity.setAttribute(AbstractM3Node.ZOOKEEPER_UP, true);
+      getEntity().setAttribute(AbstractM3Node.ZOOKEEPER_UP, true);
    }
 
    public void startWarden() {
@@ -235,23 +241,21 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
 //        // was needed but don't think it is anymore
 //        Thread.sleep(60*1000);
 //
-       AbstractM3Node entity = (AbstractM3Node) getEntity();
-
        log.info("Setting up MapR user and configuring package repositories on: " + entity);
-       entity.setupMapRUser();
+       getEntity().setupMapRUser();
        repoUpdate();
        repoInstall();
        log.info("Configuring MapR on: " + entity);
        configureMapR();
        setupDisks();
-       if (entity.isMaster()) {
+       if (getEntity().isMaster()) {
           log.info("Setting up mysql on master: " + entity);
-          ((MasterNode) entity).setupMySql();
+          ((MasterNodeImpl) entity).setupMySql();
        }
-       if (entity.isZookeeper()) {
+       if (getEntity().isZookeeper()) {
           log.info("Starting zookeeper on: " + entity);
           startZookeeper();
-       } else entity.setAttribute(AbstractM3Node.ZOOKEEPER_UP, false);
+       } else getEntity().setAttribute(AbstractM3Node.ZOOKEEPER_UP, false);
 
        log.info("Configure phase done on: " + entity);
     }
@@ -260,19 +264,19 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
     public void start() {
        AbstractM3Node entity = (AbstractM3Node) getEntity();
 
-       entity.setAttribute(AbstractM3Node.SUBNET_HOSTNAME, entity.getLocalHostname());
+       getEntity().setAttribute(AbstractM3Node.SUBNET_HOSTNAME, getEntity().getLocalHostname());
        enableNonTtySudo();
        log.info("Installing JDK on:" + getEntity());
        installJdk7();
        log.info("Installing/Configuring packages and starting required services on: " + getEntity());
        configure();
        //wait for ZK to be running everywhere
-       entity.getConfig(M3.ZOOKEEPER_READY);
-       entity.configureMetrics(entity.getConfig(M3.MASTER_HOSTNAME));
+       getEntity().getConfig(M3.ZOOKEEPER_READY);
+       getEntity().configureMetrics(getEntity().getConfig(M3.MASTER_HOSTNAME));
        log.info("Starting MapR services on: " + getEntity());
-       entity.startServices();
+       getEntity().startServices();
        running = true;
-       entity.setAttribute(Startable.SERVICE_UP, true);
+       getEntity().setAttribute(Startable.SERVICE_UP, true);
     }
 
     @Override public void install() { /* not used */ }
@@ -301,7 +305,7 @@ public class M3NodeDriver extends AbstractSoftwareProcessSshDriver implements So
     }
     
     public int exec(List<String> commands) {
-       int result = getMachine().execCommands(ImmutableMap.of("logPrefix", entity.getId() + "@" + getMachine()
+       int result = getMachine().execCommands(ImmutableMap.of("logPrefix", getEntity().getId() + "@" + getMachine()
                .getName()), "M3:" + entity, commands);
        if (result != 0)
           log.warn("FAILED (exit status ${result}) running " + entity + " " + commands + "; subsequent commands may " +
