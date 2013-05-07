@@ -54,7 +54,7 @@ public class MyM3App extends AbstractApplication {
             // this default is an on-disk flat-file
             .configure(AbstractM3Node.DISK_SETUP_SPEC, M3Disks.builder().
                     disks(
-                        "/mnt/mapr-storagefile1", 
+                        "/mnt/mapr-storagefile1",
                         "/mnt/mapr-storagefile2").
                     commands(
                         "sudo truncate -s 20G /mnt/mapr-storagefile1",

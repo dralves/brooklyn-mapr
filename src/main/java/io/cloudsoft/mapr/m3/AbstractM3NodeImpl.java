@@ -96,13 +96,13 @@ public abstract class AbstractM3NodeImpl extends SoftwareProcessImpl implements 
 
       if (System.getProperty("jclouds.template") == null) {
         flags.put("templateBuilder", builder);
+        flags.put("userName", "ubuntu");
       } else {
         flags.put("templateBuilder", TemplateBuilderSpec
           .parse(System.getProperty("jclouds.template"))
           .copyTo(builder, new GoogleComputeTemplateOptions()));
+        flags.put("userName", "jclouds");
       }
-
-      flags.put("userName", "jclouds");
       
       // from: http://www.mapr.com/doc/display/MapR/Ports+Used+by+MapR
       // 3888 discovered also to be needed; 2888 included for good measure
