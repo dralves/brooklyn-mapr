@@ -10,19 +10,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.enricher.basic.SensorPropagatingEnricher;
-import brooklyn.entity.basic.ApplicationBuilder;
+import brooklyn.entity.Application;
+import brooklyn.entity.basic.AbstractApplication;
+import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.StartableApplication;
 import brooklyn.entity.proxying.BasicEntitySpec;
+import brooklyn.entity.proxying.EntitySpecs;
 import brooklyn.launcher.BrooklynLauncher;
 import brooklyn.launcher.BrooklynServerDetails;
 import brooklyn.location.Location;
 import brooklyn.util.CommandLineUtil;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /** starts an M3 cluster in AWS. login as username 'ubuntu', password 'm4pr'. */
-public class MyM3App extends ApplicationBuilder {
+public class MyM3App extends AbstractApplication {
 
     private static final Logger log = LoggerFactory.getLogger(MyM3App.class);
 
@@ -32,8 +36,8 @@ public class MyM3App extends ApplicationBuilder {
 //        "aws-ec2-us-east-1-centos";
 
     @Override
-    public void doBuild() {
-        M3 m3 = createChild(BasicEntitySpec.newInstance(M3.class)
+    public void init() {
+        M3 m3 = addChild(BasicEntitySpec.newInstance(M3.class)
 
             // EDIT to choose your own password
             // (you can also specify a MAPR_USERNAME; the default is 'mapr')
@@ -52,7 +56,7 @@ public class MyM3App extends ApplicationBuilder {
                     build() ));
         
         // show URL at top level
-        SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(getApp());
+        SensorPropagatingEnricher.newInstanceListeningTo(m3, MasterNode.MAPR_URL).addToEntityAndEmitAll(this);
     }
 
     public static void main(String[] argv) {
@@ -64,17 +68,15 @@ public class MyM3App extends ApplicationBuilder {
         String port =  CommandLineUtil.getCommandLineOption(args, "--port", "8081+");
         String location = CommandLineUtil.getCommandLineOption(args, "--location", DEFAULT_LOCATION);
 
-        BrooklynServerDetails server = BrooklynLauncher.newLauncher()
+        BrooklynLauncher launcher = BrooklynLauncher.newInstance()
+                .application(EntitySpecs.appSpec(MyM3App.class).displayName("MapR"))
                 .webconsolePort(port)
-                .launch();
-
-        Location loc = server.getManagementContext().getLocationRegistry().resolve(location);
-
-        StartableApplication app = new MyM3App()
-                .manage(server.getManagementContext());
+                .location(location)
+                .start();
+         
+        Entities.dumpInfo(launcher.getApplications());
         
-        app.start(ImmutableList.of(loc));
-        
+        Application app = Iterables.getOnlyElement(launcher.getApplications());
         log.info("RUNNING MapR at "+app.getAttribute(MasterNode.MAPR_URL));
     }
 }

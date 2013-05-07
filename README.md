@@ -16,19 +16,25 @@ Then, copy the generated keys to `~/.ssh/authorized_keys` for the build user.
 
 To run it, either:
 
-* Download and install the `brooklyn` CLI tool from [brooklyncentral.github.com](http://brooklyncentral.github.com/) and run in the project root.
+* Build the mapr distribution, unpack it and run the static `main` in `io.cloudsoft.mapr.MyM3App`:
 
-	
-	`export BROOKLYN_CLASSPATH=target/brooklyn-mapr-0.1.0-SNAPSHOT.jar`
-	
-	`brooklyn launch -a io.cloudsoft.mapr.MyM3App -l aws-ec2:us-east-1`
+	export VERSION=0.2.0-SNAPSHOT
+	mvn clean install assembly:assembly -DskipTests
+	cp target/brooklyn-mapr-${VERSION}-dist.tar.gz /path/to/my/install
+	cd /path/to/my/install
+	tar xzf brooklyn-mapr-${VERSION}-dist.tar.gz
+	cd brooklyn-mapr-${VERSION}
+	./start.sh --location aws-ec2:us-east-1
 
-* or, Grab all dependencies (using maven, or in your favourite IDE) and run the static `main` in `io.cloudsoft.mapr.MyM3App`
+* Or download and install the `brooklyn` CLI tool from [brooklyncentral.github.com](http://brooklyncentral.github.com/) and run in the project root.
+
+        export VERSION=0.2.0-SNAPSHOT
+	export BROOKLYN_CLASSPATH=target/brooklyn-mapr-${VERSION}.jar:~/.m2/repository/mysql/mysql-connector-java/5.1.6/mysql-connector-java-5.1.6.jar
+	brooklyn launch -a io.cloudsoft.mapr.MyM3App -l aws-ec2:us-east-1
+
 
 After about 20 minutes, it should print out the URL of the MapR master node and the Brooklyn console.  
-You must manually accept the license in MapR (credentials defined in MyM3App), 
-and then manually inform Brooklyn you have done so (effector setLicenseApproved on master),
-then the cluster will continue to set up (another 2 minutes or so).
+You must manually accept the license in MapR (credentials defined in MyM3App).
 
 Once fully booted, you can resize (scale out) the worker cluster, stop nodes, and see a few sensors.
 As an exercise to the reader, add new sensors with the metrics you care about, and perhaps add a

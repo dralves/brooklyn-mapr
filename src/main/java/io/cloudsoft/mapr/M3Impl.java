@@ -49,7 +49,7 @@ public class M3Impl extends AbstractEntity implements M3 {
    }
 
    @Override
-   public void postConstruct() {
+   public void init() {
       // The DB master
       master = (MasterNode) addChild(getEntityManager().createEntity(BasicEntitySpec.newInstance(MasterNode.class)
               .configure("name", "node1 (master)")));

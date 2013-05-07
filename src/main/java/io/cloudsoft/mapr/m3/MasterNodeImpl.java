@@ -1,6 +1,6 @@
 package io.cloudsoft.mapr.m3;
 
-import static com.google.common.base.Throwables.propagate;
+import static brooklyn.util.exceptions.Exceptions.propagate;
 import static com.google.common.collect.ImmutableList.of;
 
 import java.sql.Connection;
@@ -150,7 +150,7 @@ public class MasterNodeImpl extends AbstractM3NodeImpl implements MasterNode {
    @Override
    public void stop() {
       try {
-         connection.close();
+         if (connection != null) connection.close();
       } catch (SQLException e) {
          propagate(e);
       }
