@@ -12,9 +12,12 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <brooklyn.version>0.5.0-rc.2</brooklyn.version>
+        <brooklyn.version>0.6.0-SNAPSHOT</brooklyn.version>
+        <jclouds.version>1.6.0</jclouds.version>
         <slf4j.version>1.6.6</slf4j.version>
+        <logback.version>1.0.7</logback.version>
         <mysql.connector.version>5.1.6</mysql.connector.version>
+        <jersey.version>1.12</jersey.version>
         <testng.version>6.7</testng.version>
     </properties>
 
@@ -69,27 +72,37 @@
         <dependency>
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-allcompute</artifactId>
-            <version>1.6.0-rc.1</version>
+            <version>${jclouds.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jclouds.labs</groupId>
             <artifactId>google-compute-engine</artifactId>
             <version>1.7.0-SNAPSHOT</version>
+                        <exclusions>
+              <exclusion>
+                <groupId>org.jclouds</groupId>
+                <artifactId>jclouds-core</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.jclouds</groupId>
+                <artifactId>jclouds-compute</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jclouds.driver</groupId>
             <artifactId>jclouds-sshj</artifactId>
-            <version>1.6.0-rc.1</version>
+            <version>${jclouds.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.12</version>
+            <version>${jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.0.9</version>
+            <version>${logback.version}</version>
         </dependency>
     </dependencies>
 
@@ -101,6 +114,15 @@
         <repository>
             <id>libs-snapshot-local</id>
             <url>http://ccweb.cloudsoftcorp.com/maven/libs-snapshot-local/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>never</updatePolicy>
