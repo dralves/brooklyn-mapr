@@ -1,20 +1,5 @@
 package io.cloudsoft.mapr;
 
-import io.cloudsoft.mapr.m3.AbstractM3Node;
-import io.cloudsoft.mapr.m3.M3Disks;
-import io.cloudsoft.mapr.m3.MasterNode;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.List;
-
-import org.jclouds.googlecompute.GoogleComputeApiMetadata;
-import org.jclouds.util.Strings2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import brooklyn.enricher.basic.SensorPropagatingEnricher;
 import brooklyn.entity.Application;
 import brooklyn.entity.basic.AbstractApplication;
@@ -26,10 +11,21 @@ import brooklyn.launcher.BrooklynLauncher;
 import brooklyn.launcher.BrooklynServerDetails;
 import brooklyn.location.Location;
 import brooklyn.util.CommandLineUtil;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import io.cloudsoft.mapr.m3.AbstractM3Node;
+import io.cloudsoft.mapr.m3.M3Disks;
+import io.cloudsoft.mapr.m3.MasterNode;
+import org.jclouds.googlecomputeengine.GoogleComputeEngineApiMetadata;
+import org.jclouds.util.Strings2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
 
 /** starts an M3 cluster in AWS. login as username 'ubuntu', password 'm4pr'. */
 public class MyM3App extends AbstractApplication {
@@ -37,7 +33,7 @@ public class MyM3App extends AbstractApplication {
     private static final Logger log = LoggerFactory.getLogger(MyM3App.class);
 
     final static String DEFAULT_LOCATION =
-        "google-compute";
+        "google-compute-engine";
 //        "cloudstack-citrix";
 //        "aws-ec2-us-east-1-centos";
 
@@ -57,7 +53,7 @@ public class MyM3App extends AbstractApplication {
                         "/mnt/mapr-storagefile1",
                         "/mnt/mapr-storagefile2").
                     commands(
-                        "sudo truncate -s 20G /mnt/mapr-storagefile1",
+                        "sudo truncate -s 10G /mnt/mapr-storagefile1",
                         "sudo truncate -s 10G /mnt/mapr-storagefile2").
                     build() ));
         
@@ -68,7 +64,7 @@ public class MyM3App extends AbstractApplication {
     public static void main(String[] argv) throws IOException {
         if (System.getProperty("credential") != null && new File(System.getProperty("credential")).exists()){
           System.setProperty("credential", Strings2.toStringAndClose(new FileInputStream(System.getProperty("credential"))));
-          System.setProperty("jclouds.template", GoogleComputeApiMetadata.defaultProperties().getProperty("jclouds.template"));
+          System.setProperty("jclouds.template", GoogleComputeEngineApiMetadata.defaultProperties().getProperty("jclouds.template"));
         }
 
         System.setProperty("jclouds.ssh.max-retries", 20 + "");
