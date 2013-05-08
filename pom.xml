@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.cloudsoft.mapr</groupId>
@@ -13,7 +14,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <brooklyn.version>0.6.0-SNAPSHOT</brooklyn.version>
-        <jclouds.version>1.6.0</jclouds.version>
+        <jclouds.version>1.6.0-rc.5</jclouds.version>
         <slf4j.version>1.6.6</slf4j.version>
         <logback.version>1.0.7</logback.version>
         <mysql.connector.version>5.1.6</mysql.connector.version>
@@ -77,16 +78,16 @@
         <dependency>
             <groupId>org.jclouds.labs</groupId>
             <artifactId>google-compute-engine</artifactId>
-            <version>1.7.0-SNAPSHOT</version>
-                        <exclusions>
-              <exclusion>
-                <groupId>org.jclouds</groupId>
-                <artifactId>jclouds-core</artifactId>
-              </exclusion>
-              <exclusion>
-                <groupId>org.jclouds</groupId>
-                <artifactId>jclouds-compute</artifactId>
-              </exclusion>
+            <version>${jclouds.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jclouds</groupId>
+                    <artifactId>jclouds-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jclouds</groupId>
+                    <artifactId>jclouds-compute</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -208,15 +209,21 @@
         <!-- sign and make javadoc when deploying; note, this means you'll need gpg set up to deploy -->
         <profile>
             <id>make-more-things-when-deploying</id>
-            <activation> <property><name>brooklyn.deployTo</name></property> </activation>            
-            <build><plugins>
-                <plugin>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                </plugin>
-            </plugins></build>
+            <activation>
+                <property>
+                    <name>brooklyn.deployTo</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <!-- different properties used to deploy to different locations depending on profiles;
@@ -224,7 +231,12 @@
             (and soon we will support artifactory) -->
         <profile>
             <id>cloudsoft-filesystem-repo</id>
-            <activation> <property><name>brooklyn.deployTo</name><value>cloudsoftFilesystem</value></property> </activation>
+            <activation>
+                <property>
+                    <name>brooklyn.deployTo</name>
+                    <value>cloudsoftFilesystem</value>
+                </property>
+            </activation>
             <distributionManagement>
                 <repository>
                     <id>cloudsoft-deploy-cloudfront-origin-releases</id>
@@ -240,7 +252,12 @@
         </profile>
         <profile>
             <id>cloudsoft-artifactory-repo</id>
-            <activation> <property><name>brooklyn.deployTo</name><value>cloudsoftArtifactory</value></property> </activation>
+            <activation>
+                <property>
+                    <name>brooklyn.deployTo</name>
+                    <value>cloudsoftArtifactory</value>
+                </property>
+            </activation>
             <distributionManagement>
                 <repository>
                     <id>cloudsoft-deploy-artifactory-release</id>
@@ -256,7 +273,12 @@
         </profile>
         <profile>
             <id>sonatype-nexus-repo</id>
-            <activation> <property><name>brooklyn.deployTo</name><value>sonatype</value></property> </activation>
+            <activation>
+                <property>
+                    <name>brooklyn.deployTo</name>
+                    <value>sonatype</value>
+                </property>
+            </activation>
             <distributionManagement>
                 <repository>
                     <id>sonatype-nexus-staging</id>
